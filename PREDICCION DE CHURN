@@ -1,1 +1,50 @@
+# --- EJERCICIO PREDICCIÓN DE CHURN---
 
+
+# 1. Instalar e importar
+!pip install pandas scikit-learn xgboost -q
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from xgboost import XGBClassifier
+from google.colab import files
+
+# 2. Subir el archivo
+print("/content/WA_Fn-UseC_-Telco-Customer-Churn.csv ")
+uploaded = files.upload()
+df = pd.read_csv(list(uploaded.keys())[0])
+
+# 3. Limpieza rápida
+df = df.drop('customerID', axis=1)
+df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
+df['TotalCharges'].fillna(0, inplace=True)
+
+# 4. Codificar todo rápido
+for col in df.columns:
+    if df[col].dtype == 'object':
+        df[col] = LabelEncoder().fit_transform(df[col])
+
+# 5. Separar X y y
+X = df.drop('Churn', axis=1)
+y = df['Churn']
+
+# 6. Dividir datos
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# 7. Entrenar modelo (¡súper simple!)
+modelo = XGBClassifier()
+modelo.fit(X_train, y_train)
+
+# 8. Predicción de ejemplo (¡el cliente 1 del test!)
+cliente = X_test.iloc[0:1]  # Primer cliente del test
+prediccion = modelo.predict(cliente)[0]
+probabilidad = modelo.predict_proba(cliente)[0][1]
+
+print("\n" + "="*50)
+print("   PREDICCIÓN DE CHURN")
+print("="*50)
+print(f"Cliente (ejemplo):")
+print(cliente.T)
+print(f"\n→ ¿Abandonará? {'SÍ (CHURN)' if prediccion == 1 else 'NO (NO CHURN)'}")
+print(f"→ Probabilidad de abandono: {probabilidad:.1%}")
+print("="*50)
